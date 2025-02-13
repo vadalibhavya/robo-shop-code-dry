@@ -9,3 +9,22 @@ systemd_setup() {
   systemctl start $component
 }
 
+artifact_download(){
+  rm -rf /app
+ mkdir /app
+ curl -o /tmp/$component.zip https://roboshop-artifacts.s3.amazonaws.com/$component-v3.zip
+ cd /app
+ unzip /tmp/$component.zip
+}
+
+node_setup(){
+  dnf module disable nodejs -y
+  dnf module enable nodejs:20 -y
+  cp $component.service /etc/systemd/system/$component.service
+  dnf install nodejs -y
+  useradd roboshop
+  artifact_download
+  cd /app
+  npm install
+  systemd_setup
+}
