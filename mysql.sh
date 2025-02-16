@@ -1,6 +1,4 @@
-source common.sh
-component=mysqld
-
 dnf install mysql-server -y
-systemd_setup
+systemctl enable mysqld
+systemctl start mysqld
 mysql_secure_installation --set-root-pass RoboShop@1

@@ -1,8 +1,6 @@
-source common.sh
-component=rabbitmq-server
-
 cp rabbitmq.repo /etc/yum.repos.d/rabbitmq.repo
 dnf install rabbitmq-server -y
-systemd_setup
+systemctl enable rabbitmq-server
+systemctl start rabbitmq-server
 rabbitmqctl add_user roboshop roboshop123
 rabbitmqctl set_permissions -p / roboshop ".*" ".*" ".*"

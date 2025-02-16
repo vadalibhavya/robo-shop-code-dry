@@ -1,33 +1,47 @@
-# This function is used to set up the systemd service for the given component.
-# It reloads the systemctl daemon, enables the component and starts it.
-systemd_setup() {
-  print_message "Setting up systemd service for $component"
-  systemctl daemon-reload && systemctl enable $component && systemctl start $component
+message() {
+  echo -e "\e[32m$1\e[0m"
 }
 
-artifact_download() {
-  print_message "Downloading $component artifact"
-  rm -rf /app && mkdir /app &&
-  curl -o /tmp/$component.zip https://roboshop-artifacts.s3.amazonaws.com/$component-v3.zip
-  print_message "Extracting $component artifact"
-  && cd /app
-  && unzip /tmp/$component.zip
+status_check() {
+  if [ "$1" -eq 0 ]; then
+    message "successful"
+  else
+    message "failed"
+    exit 1
+  fi
 }
 
-node_setup() {
-  print_message "Installing $component"
-  dnf module disable nodejs -y &&  print_message enabling the nodejs &&
-  dnf module enable nodejs:20 -y && print_message Copying the service file &&
-  cp $component.service /etc/systemd/system/$component.service &&
-  dnf install nodejs -y &&
-  useradd roboshop && artifact_download &&
-  cd /app && npm install && systemd_setup
+systemrestart(){
+  systemctl daemon-reload
+  systemctl enable "$1"
+  systemctl start "$1"
 }
 
-print_message() {
-  echo -e "\033[32m$1\033[0m"
-}
+useradd() {
+  message "Disabling Node js"
+  dnf module disable nodejs -y
+  status_check $?
 
-print_info() {
-  echo -e "\033[34m$1\033[0m"
+  message "Enabling Node js 20"
+  dnf module enable nodejs:20 -y
+  status_check $?
+
+  # shellcheck disable=SC2027
+  message copying the "$component" service file
+  cp "$component".service /etc/systemd/system/"$component".service
+  status_check $?
+
+  message "Installing Node js"
+  dnf install nodejs -y
+  message "Creating User roboshop"
+  id roboshop &>/dev/null || useradd roboshop
+  mkdir /app
+  message Downloading "$component" Artifacts
+  curl -o /tmp/"$component".zip https://roboshop-artifacts.s3.amazonaws.com/"$component"-v3.zip
+  cd /app
+  unzip /tmp/"$component".zip
+
+  message "Installing Dependencies"
+  cd /app
+  npm install
 }

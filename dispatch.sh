@@ -1,11 +1,21 @@
 source common.sh
 component=dispatch
+message "Installing golang"
 dnf install golang -y
-cp dispatch.service /etc/systemd/system/dispatch.service
-useradd roboshop
-artifact_download
+message " copying the $component service file"
+cp $component.service /etc/systemd/system/$component.service
+status_check $?
+id roboshop
+if [ $? -ne 0 ]; then
+  useradd roboshop
+fi
+mkdir /app
+curl -L -o /tmp/$component.zip https://roboshop-artifacts.s3.amazonaws.com/$component-v3.zip
+status_check $?
 cd /app
-go mod init dispatch
+unzip /tmp/$component.zip
+cd /app
+go mod init $component
 go get
 go build
-systemd_setup
+systemrestart $component
