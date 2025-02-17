@@ -13,7 +13,12 @@ systemctl daemon-reload
 systemctl enable shipping
 systemctl start shipping
 dnf install mysql -y
-mysql -h mysql-dev.doubtfree.online -uroot -pRoboShop@1 < /app/db/schema.sql
-mysql -h mysql-dev.doubtfree.online -uroot -pRoboShop@1 < /app/db/app-user.sql
-mysql -h mysql-dev.doubtfree.online -uroot -pRoboShop@1 < /app/db/master-data.sql
+
+
+for file in schema aap-user master-data;
+do
+  message "loading $file"
+  mysql -h mysql-dev.doubtfree.online -uroot -pRoboShop@1 < /app/db/$file.sql
+done
 systemctl restart shipping
+
